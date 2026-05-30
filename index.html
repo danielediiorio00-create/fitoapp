@@ -126,34 +126,34 @@
   .stat .l{font-size:9.5px;color:var(--ink-soft);margin-top:5px;font-weight:300}
 
   /* ── Screen 3: Cabin / Navigazione ── */
-  .cabin{background:#11140f}
+  .cabin{background:var(--bg)}
   .cabin-top{padding:calc(10px + var(--safe-t)) 22px 8px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
-  .cabin-top .who{font-size:12px;color:rgba(255,255,255,.7);font-weight:400}
-  .cabin-top .spk{font-size:22px;cursor:pointer;opacity:.85}
+  .cabin-top .who{font-size:12px;color:var(--ink-soft);font-weight:500}
+  .cabin-top .spk{font-size:22px;cursor:pointer;color:var(--ink);opacity:.8}
   .verdict{flex-shrink:0;text-align:center;padding:2px 0 10px}
   .verdict .v{font-size:36px;font-weight:600;letter-spacing:.5px;line-height:1;transition:color .4s}
-  .verdict .sub{font-size:13px;font-weight:300;margin-top:4px;transition:color .4s}
+  .verdict .sub{font-size:13px;font-weight:400;margin-top:4px;color:var(--ink-soft);transition:color .4s}
 
   .frameWrap{position:relative;flex:1;margin:0 14px;border-radius:30px;padding:16px;transition:background .45s, box-shadow .45s}
-  .frameWrap.go{background:radial-gradient(circle at 50% 50%, rgba(79,180,90,0), rgba(79,180,90,.35));box-shadow:inset 0 0 0 3px rgba(79,180,90,.9), inset 0 0 60px 8px rgba(79,180,90,.65), 0 0 50px rgba(79,180,90,.5)}
-  .frameWrap.wait{background:radial-gradient(circle at 50% 50%, rgba(231,181,60,0), rgba(231,181,60,.35));box-shadow:inset 0 0 0 3px rgba(231,181,60,.9), inset 0 0 60px 8px rgba(231,181,60,.6), 0 0 50px rgba(231,181,60,.45)}
-  .frameWrap.stop{background:radial-gradient(circle at 50% 50%, rgba(221,75,62,0), rgba(221,75,62,.4));box-shadow:inset 0 0 0 3px rgba(221,75,62,.95), inset 0 0 64px 10px rgba(221,75,62,.7), 0 0 56px rgba(221,75,62,.55)}
+  .frameWrap.go{background:radial-gradient(circle at 50% 50%, rgba(79,180,90,0), rgba(79,180,90,.25));box-shadow:inset 0 0 0 3px rgba(79,180,90,.9), inset 0 0 60px 8px rgba(79,180,90,.55), 0 0 40px rgba(79,180,90,.3)}
+  .frameWrap.wait{background:radial-gradient(circle at 50% 50%, rgba(231,181,60,0), rgba(231,181,60,.25));box-shadow:inset 0 0 0 3px rgba(231,181,60,.9), inset 0 0 60px 8px rgba(231,181,60,.5), 0 0 40px rgba(231,181,60,.25)}
+  .frameWrap.stop{background:radial-gradient(circle at 50% 50%, rgba(221,75,62,0), rgba(221,75,62,.3));box-shadow:inset 0 0 0 3px rgba(221,75,62,.95), inset 0 0 64px 10px rgba(221,75,62,.6), 0 0 46px rgba(221,75,62,.35)}
   .frameWrap.go.pulse{animation:glowGo 1.5s ease-in-out infinite}
   .frameWrap.stop.pulse{animation:glowStop 1s ease-in-out infinite}
-  @keyframes glowGo{0%,100%{box-shadow:inset 0 0 0 3px rgba(79,180,90,.9), inset 0 0 50px 6px rgba(79,180,90,.5), 0 0 40px rgba(79,180,90,.4)}50%{box-shadow:inset 0 0 0 4px rgba(79,180,90,1), inset 0 0 85px 14px rgba(79,180,90,.9), 0 0 75px rgba(79,180,90,.75)}}
-  @keyframes glowStop{0%,100%{box-shadow:inset 0 0 0 3px rgba(221,75,62,.95), inset 0 0 55px 8px rgba(221,75,62,.6), 0 0 46px rgba(221,75,62,.45)}50%{box-shadow:inset 0 0 0 5px rgba(221,75,62,1), inset 0 0 95px 16px rgba(221,75,62,.97), 0 0 85px rgba(221,75,62,.85)}}
+  @keyframes glowGo{0%,100%{box-shadow:inset 0 0 0 3px rgba(79,180,90,.9), inset 0 0 50px 6px rgba(79,180,90,.4), 0 0 30px rgba(79,180,90,.3)}50%{box-shadow:inset 0 0 0 4px rgba(79,180,90,1), inset 0 0 85px 14px rgba(79,180,90,.75), 0 0 65px rgba(79,180,90,.55)}}
+  @keyframes glowStop{0%,100%{box-shadow:inset 0 0 0 3px rgba(221,75,62,.95), inset 0 0 55px 8px rgba(221,75,62,.5), 0 0 36px rgba(221,75,62,.3)}50%{box-shadow:inset 0 0 0 5px rgba(221,75,62,1), inset 0 0 95px 16px rgba(221,75,62,.85), 0 0 75px rgba(221,75,62,.65)}}
   .frameWrap .leafbox{position:absolute;inset:16px;width:auto;height:auto;border-radius:18px;overflow:hidden;z-index:1}
   .navband{position:absolute;left:16px;right:16px;bottom:16px;z-index:6;display:flex;justify-content:center}
-  .navchip{background:rgba(17,20,15,.72);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:9px 16px;font-size:12.5px;font-weight:400}
-  .gpschip{position:absolute;left:16px;top:16px;z-index:6;background:rgba(17,20,15,.72);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:7px 12px;font-size:10.5px;font-weight:400;display:flex;align-items:center;gap:7px}
+  .navchip{background:rgba(43,47,41,.85);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:999px;padding:9px 16px;font-size:12.5px;font-weight:400}
+  .gpschip{position:absolute;left:16px;top:16px;z-index:6;background:rgba(43,47,41,.85);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:999px;padding:7px 12px;font-size:10.5px;font-weight:400;display:flex;align-items:center;gap:7px}
   .gpschip .live{width:7px;height:7px;border-radius:50%;background:#4fb45a;animation:blink 1.3s infinite}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
   .ctl{display:flex;gap:9px;padding:10px 16px 4px;flex-shrink:0}
-  .ctl button{flex:1;font-family:var(--font);font-size:13.5px;font-weight:500;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:14px;cursor:pointer;color:#fff}
-  .ctl button.run{background:#f3f4f0;color:#11140f;border-color:#f3f4f0}
+  .ctl button{flex:1;font-family:var(--font);font-size:13.5px;font-weight:500;background:var(--glass-strong);border:1px solid var(--line);border-radius:18px;padding:14px;cursor:pointer;color:var(--ink);transition:all 0.2s}
+  .ctl button.run{background:var(--ink);color:#f3f4f0;border-color:var(--ink)}
   .cabin-foot{flex-shrink:0;padding:4px 16px 8px}
-  .cabin-foot .btn{padding:15px;font-size:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);color:#fff}
+  .cabin-foot .btn{padding:15px;font-size:14px;background:var(--glass-strong);border:1px solid var(--line);color:var(--ink)}
 
   /* ── Splash Screen ── */
   .splash{
@@ -374,17 +374,17 @@
     if(st==='go'){
       frame.className='frameWrap go pulse';
       vWord.textContent='SPRUZZA';vWord.style.color='var(--go)';
-      vSub.textContent='sei nel focolaio — pompa aperta';vSub.style.color='rgba(190,240,190,.9)';
+      vSub.textContent='sei nel focolaio — pompa aperta';vSub.style.color='var(--ink-soft)';
       navChip.textContent='trattamento in corso';
     }else if(st==='wait'){
       frame.className='frameWrap wait';
       vWord.textContent='PRONTO';vWord.style.color='var(--wait)';
-      vSub.textContent='focolaio vicino — preparati';vSub.style.color='rgba(245,225,150,.9)';
+      vSub.textContent='focolaio vicino — preparati';vSub.style.color='var(--ink-soft)';
       navChip.textContent='apri tra '+m+' m';
     }else{
       frame.className='frameWrap stop pulse';
       vWord.textContent='STOP';vWord.style.color='var(--stop)';
-      vSub.textContent='coltura sana — pompa spenta';vSub.style.color='rgba(245,180,170,.9)';
+      vSub.textContent='coltura sana — pompa spenta';vSub.style.color='var(--ink-soft)';
       navChip.textContent='prossimo focolaio tra '+m+' m';
     }
     if(st!==last){
