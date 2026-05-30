@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitoapp-v5';
+const CACHE_NAME = 'fitoapp-v6';
 const ASSETS = [
   './',
   './index.html',
