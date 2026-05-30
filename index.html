@@ -32,6 +32,14 @@
     --safe-l:env(safe-area-inset-left, 0px);
     --safe-r:env(safe-area-inset-right, 0px);
   }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#11130e;--ink:#e9ebe6;--ink-soft:#8d9387;
+      --glass:rgba(30,34,27,.55);--glass-strong:rgba(22,26,19,.85);
+      --line:rgba(233,235,230,.08);--lime:#dff562;--lime-ink:#1e2405;
+      --sage-2:#354b27;--sage-3:#4d6d39;--sage-4:#a8c98a;
+    }
+  }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overflow:hidden}
   body{background:var(--bg);font-family:var(--font);color:var(--ink);display:flex;flex-direction:column;font-weight:300}
@@ -66,10 +74,11 @@
 
   /* ── Screen 1: Upload / Rilievo ── */
   .hero{
-    position:relative;margin:0;overflow:hidden;background:#fff;
+    position:relative;margin:0;overflow:hidden;background:var(--glass-strong);
     flex-shrink:0;min-height:220px;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     padding-top:var(--safe-t);
+    border-bottom:1px solid var(--line);
   }
   .aurora{position:absolute;inset:0;filter:blur(2px)}
   .aurora::before,.aurora::after{content:"";position:absolute;border-radius:50%;filter:blur(46px);opacity:.95}
@@ -80,19 +89,26 @@
   .hero-sub{position:relative;z-index:3;font-size:13px;color:rgba(255,255,255,.85);font-weight:300}
 
   .up-body{flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding:16px 22px 0;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  .drop{border:1.5px dashed rgba(63,125,79,.4);border-radius:30px;padding:30px 20px;text-align:center;background:linear-gradient(180deg,rgba(168,201,138,.18),rgba(255,255,255,.4))}
+  .drop{border:1.5px dashed rgba(63,125,79,.4);border-radius:30px;padding:26px 20px;text-align:center;background:linear-gradient(180deg,rgba(168,201,138,.12),var(--glass))}
   .drop .ic{font-size:38px;margin-bottom:10px}
   .drop .t{font-size:18px;font-weight:500}
   .drop .d{font-size:12.5px;color:var(--ink-soft);margin-top:6px;font-weight:300}
   .proc{display:flex;flex-direction:column;gap:12px}
   .prow{display:flex;align-items:center;gap:12px;font-size:13.5px;font-weight:300}
   .prow .ck{width:24px;height:24px;border-radius:50%;background:var(--sage-4);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;color:#fff}
-  .prow .ck.w{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}
+  .prow .ck.w{background:var(--glass-strong);border:1.5px solid var(--line);color:var(--ink-soft)}
+  .prow .ck.loading {
+    border: 2.5px solid rgba(63, 125, 79, 0.2);
+    border-top-color: var(--sage-4);
+    animation: rot 0.8s linear infinite;
+    background: transparent !important;
+    color: transparent !important;
+  }
 
   .foot{flex-shrink:0;padding:16px 18px 8px}
   .btn{width:100%;border:none;border-radius:30px;padding:18px;font-family:var(--font);font-weight:500;font-size:15.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .15s, box-shadow .2s}
   .btn:active{transform:scale(.97)}
-  .btn-dark{background:#2b2f29;color:#f3f4f0}
+  .btn-dark{background:var(--ink);color:var(--bg)}
 
   /* ── Screen 2: Mappa ── */
   .mapcard{position:relative;flex:1;overflow:hidden;background:#dfe4da;border-bottom:1px solid var(--line)}
@@ -182,22 +198,28 @@
 
 <!-- ══════════ Screen 1: Rilievo ══════════ -->
 <section class="screen" id="s-upload">
-  <div class="hero">
-    <div class="aurora"></div>
-    <div class="hero-label">Campo Nord 04</div>
-    <div class="hero-num">2.1</div>
-    <div class="hero-sub">ettari rilevati</div>
+  <div class="hero" id="up-hero">
+    <div class="aurora" id="up-aurora" style="opacity: 0.12; transition: opacity 0.8s;"></div>
+    <div class="hero-label" id="up-label">Connetti Dispositivo</div>
+    <div class="hero-num" id="up-num" style="transition: all 0.5s;">0.0</div>
+    <div class="hero-sub" id="up-sub">nessun rilievo caricato</div>
   </div>
   <div class="up-body">
-    <div class="drop"><div class="ic">&#128752;</div><div class="t">Carica rilievo drone</div><div class="d">Immagini multispettrali + traccia GPS</div></div>
-    <div class="proc">
-      <div class="prow"><span class="ck">&#10003;</span> Ortomosaico ricostruito</div>
-      <div class="prow"><span class="ck">&#10003;</span> Indice NDVI calcolato</div>
-      <div class="prow"><span class="ck">&#10003;</span> 3 focolai geo-tracciati</div>
-      <div class="prow"><span class="ck w">&#9679;</span> Percorso ottimale pronto</div>
+    <div class="drop" id="up-drop" onclick="startSurveyUpload()" style="cursor:pointer; transition: all 0.3s; border-color: var(--sage-2);">
+      <div class="ic" id="up-drop-ic" style="font-size: 40px; margin-bottom: 8px;">🛰</div>
+      <div class="t" id="up-drop-t" style="font-weight: 600;">Avvia Rilievo Drone</div>
+      <div class="d" id="up-drop-d">Associa drone in volo & scarica dati NDVI</div>
+    </div>
+    <div class="proc" id="up-proc" style="opacity: 0.45; pointer-events: none; transition: opacity 0.4s;">
+      <div class="prow" id="prow-1"><span class="ck w" id="pck-1">●</span> Ortomosaico ricostruito</div>
+      <div class="prow" id="prow-2"><span class="ck w" id="pck-2">●</span> Indice NDVI calcolato</div>
+      <div class="prow" id="prow-3"><span class="ck w" id="pck-3">●</span> 3 focolai geo-tracciati</div>
+      <div class="prow" id="prow-4"><span class="ck w" id="pck-4">●</span> Percorso ottimale pronto</div>
     </div>
   </div>
-  <div class="foot"><button class="btn btn-dark" onclick="go('map')">Vedi la mappa</button></div>
+  <div class="foot" id="up-foot">
+    <button class="btn btn-dark" id="up-btn" disabled onclick="go('map')" style="opacity: 0.4; pointer-events: none; transition: all 0.3s;">Importa Mappa Campo</button>
+  </div>
 </section>
 
 <!-- ══════════ Screen 2: Mappa ══════════ -->
@@ -419,6 +441,112 @@
   function stopDrive(){if(timer){clearInterval(timer);timer=null;}}
   function toggleDrive(){try{ensureAudio();}catch(e){}if(timer){stopDrive();playBtn.innerHTML='&#9654; Riprendi';}else{if(idx>=route.length)idx=0;startDrive();}}
   function resetDrive(){stopDrive();idx=0;last='go';playBtn.innerHTML='&#9654; Simula percorso';if(trk)trk.setLatLng(route[0]);if(map3)map3.setView(route[0],18);applyState(route[0]);}
+
+  /* ── Interactive Drone Upload ── */
+  let surveyUploading = false;
+  let surveyCompleted = false;
+
+  function startSurveyUpload() {
+    if (surveyUploading || surveyCompleted) return;
+    surveyUploading = true;
+
+    try { ensureAudio(); } catch(e) {}
+
+    const drop = document.getElementById('up-drop');
+    const dropIc = document.getElementById('up-drop-ic');
+    const dropT = document.getElementById('up-drop-t');
+    const dropD = document.getElementById('up-drop-d');
+    const proc = document.getElementById('up-proc');
+    const upNum = document.getElementById('up-num');
+    const upLabel = document.getElementById('up-label');
+    const upSub = document.getElementById('up-sub');
+    const upAurora = document.getElementById('up-aurora');
+
+    drop.style.borderColor = 'var(--wait)';
+    dropIc.innerHTML = '⚡';
+    dropIc.style.animation = 'rot 1.5s linear infinite';
+    dropT.textContent = 'Associazione in corso...';
+    dropD.textContent = 'Connessione al canale telemetrico del drone';
+    proc.style.opacity = '1';
+
+    tone(440, 0.1, 'sine', 0.08);
+
+    // Step 1: Connection and download start
+    setTimeout(() => {
+      document.getElementById('pck-1').className = 'ck';
+      document.getElementById('pck-1').innerHTML = '✓';
+      tone(520, 0.08, 'sine', 0.08);
+      
+      document.getElementById('pck-2').className = 'ck loading';
+      document.getElementById('pck-2').innerHTML = '';
+      dropT.textContent = 'Scaricamento rilievo...';
+      dropD.textContent = 'Download immagini multispettrali e traccia GPS';
+    }, 1000);
+
+    // Step 2: Index calculation and count-up
+    setTimeout(() => {
+      document.getElementById('pck-2').className = 'ck';
+      document.getElementById('pck-2').innerHTML = '✓';
+      tone(580, 0.08, 'sine', 0.08);
+      
+      document.getElementById('pck-3').className = 'ck loading';
+      document.getElementById('pck-3').innerHTML = '';
+      dropT.textContent = 'Calcolo indici vegetazionali...';
+      dropD.textContent = 'Analisi fotometrica NDVI sulle frequenze del NIR';
+      
+      let h = 0.0;
+      const countInterval = setInterval(() => {
+        h = parseFloat((h + 0.1).toFixed(1));
+        if (h >= 2.1) {
+          h = 2.1;
+          clearInterval(countInterval);
+        }
+        upNum.textContent = h.toFixed(1);
+      }, 40);
+    }, 2000);
+
+    // Step 3: Trajectory planning
+    setTimeout(() => {
+      document.getElementById('pck-3').className = 'ck';
+      document.getElementById('pck-3').innerHTML = '✓';
+      tone(660, 0.08, 'sine', 0.08);
+      
+      document.getElementById('pck-4').className = 'ck loading';
+      document.getElementById('pck-4').innerHTML = '';
+      dropT.textContent = 'Ottimizzazione traiettorie...';
+      dropD.textContent = 'Creazione del piano di trattamento mirato';
+    }, 3200);
+
+    // Step 4: Finished
+    setTimeout(() => {
+      document.getElementById('pck-4').className = 'ck';
+      document.getElementById('pck-4').innerHTML = '✓';
+      
+      // Joy sound
+      tone(880, 0.1, 'sine', 0.08, 0);
+      tone(1100, 0.15, 'sine', 0.08, 0.12);
+
+      upAurora.style.opacity = '0.95';
+      upLabel.textContent = 'Campo Nord 04';
+      upSub.textContent = 'rilievo completato';
+      
+      drop.style.borderColor = 'var(--go)';
+      drop.style.background = 'rgba(79, 180, 90, 0.08)';
+      dropIc.innerHTML = '✅';
+      dropIc.style.animation = 'none';
+      dropT.textContent = 'Elaborazione Completata';
+      dropD.textContent = 'Percorso pronto. Il piano ha ridotto i focolai';
+
+      const btn = document.getElementById('up-btn');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+      btn.textContent = 'Vedi la Mappa NDVI';
+
+      surveyCompleted = true;
+      surveyUploading = false;
+    }, 4500);
+  }
 
   /* ── Navigation ── */
   function go(s){
