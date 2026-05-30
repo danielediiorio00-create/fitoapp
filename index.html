@@ -329,8 +329,44 @@
   function toggleVoice(){voiceOn=!voiceOn;spk.innerHTML=voiceOn?'&#128266;':'&#128263;';}
 
   let actx=null;
-  function beep(f,d){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.type='sine';o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.05,actx.currentTime);o.start();o.stop(actx.currentTime+d);}catch(e){}}
-  function say(t){if(!voiceOn)return;try{const u=new SpeechSynthesisUtterance(t);u.lang='it-IT';u.rate=1.05;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+  function ensureAudio(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx;}
+
+  /* ── Tone generator (no voice, no language) ── */
+  function tone(freq, dur, type, vol, delay){
+    if(!voiceOn) return;
+    try{
+      const ctx=ensureAudio();
+      const t=ctx.currentTime+(delay||0);
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type=type||'sine';
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol||.08, t+0.015);
+      g.gain.setValueAtTime(vol||.08, t+dur-0.04);
+      g.gain.linearRampToValueAtTime(0, t+dur);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t); o.stop(t+dur);
+    }catch(e){}
+  }
+
+  /* 🟢 GO: rapid ascending double-chirp */
+  function sndGo(){
+    tone(660, .1, 'sine', .10, 0);
+    tone(880, .1, 'sine', .10, .12);
+    tone(1100,.15,'sine', .12, .26);
+  }
+  /* 🟡 WAIT: mid-pitch warble (attention) */
+  function sndWait(){
+    tone(580, .12, 'triangle', .09, 0);
+    tone(520, .12, 'triangle', .09, .15);
+    tone(580, .12, 'triangle', .09, .30);
+  }
+  /* 🔴 STOP: descending low tone */
+  function sndStop(){
+    tone(520, .15, 'square', .06, 0);
+    tone(380, .18, 'square', .07, .18);
+    tone(260, .25, 'square', .08, .40);
+  }
 
   function applyState(p){
     const d=nearestEdge(p);const m=Math.max(0,Math.round(d));
@@ -352,9 +388,9 @@
       navChip.textContent='prossimo focolaio tra '+m+' m';
     }
     if(st!==last){
-      if(st==='wait'){beep(680,.12);say('Focolaio vicino, preparati');}
-      if(st==='go'){beep(520,.16);setTimeout(()=>beep(520,.16),190);say('Spruzza, sei nel focolaio');}
-      if(st==='stop'&&last==='go'){beep(300,.18);say('Stop, chiudi la pompa');}
+      if(st==='wait') sndWait();
+      if(st==='go') sndGo();
+      if(st==='stop'&&last==='go') sndStop();
       last=st;
     }
   }
@@ -370,7 +406,7 @@
   }
   function startDrive(){if(timer)return;if(actx&&actx.state==='suspended')actx.resume();playBtn.innerHTML='&#10073;&#10073; Pausa';timer=setInterval(step,110);}
   function stopDrive(){if(timer){clearInterval(timer);timer=null;}}
-  function toggleDrive(){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();}catch(e){}if(timer){stopDrive();playBtn.innerHTML='&#9654; Riprendi';}else{if(idx>=route.length)idx=0;startDrive();}}
+  function toggleDrive(){try{ensureAudio();}catch(e){}if(timer){stopDrive();playBtn.innerHTML='&#9654; Riprendi';}else{if(idx>=route.length)idx=0;startDrive();}}
   function resetDrive(){stopDrive();idx=0;last='go';playBtn.innerHTML='&#9654; Simula percorso';if(trk)trk.setLatLng(route[0]);if(map3)map3.setView(route[0],18);applyState(route[0]);}
 
   /* ── Navigation ── */
