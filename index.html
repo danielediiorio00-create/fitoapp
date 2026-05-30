@@ -196,50 +196,48 @@
   <div class="spin"></div>
 </div>
 
-<!-- ══════════ Screen 1: Rilievo ══════════ -->
+<!-- ══════════ Screen 1: Rilevamenti ══════════ -->
 <section class="screen" id="s-upload">
   <div class="hero" id="up-hero">
     <div class="aurora" id="up-aurora" style="opacity: 0.12; transition: opacity 0.8s;"></div>
     <div class="hero-label" id="up-label">Connetti Dispositivo</div>
-    <div class="hero-num" id="up-num" style="transition: all 0.5s;">0.0</div>
-    <div class="hero-sub" id="up-sub">nessun rilievo caricato</div>
+    <div class="hero-num" id="up-num" style="transition: all 0.5s;">0</div>
+    <div class="hero-sub" id="up-sub">punti di irrorazione ricevuti</div>
   </div>
   <div class="up-body">
     <div class="drop" id="up-drop" onclick="startSurveyUpload()" style="cursor:pointer; transition: all 0.3s; border-color: var(--sage-2);">
       <div class="ic" id="up-drop-ic" style="font-size: 40px; margin-bottom: 8px;">🛰</div>
-      <div class="t" id="up-drop-t" style="font-weight: 600;">Avvia Rilievo Drone</div>
-      <div class="d" id="up-drop-d">Associa drone in volo & scarica dati NDVI</div>
+      <div class="t" id="up-drop-t" style="font-weight: 600;">Sincronizza Mappa Interventi</div>
+      <div class="d" id="up-drop-d">Scarica le coordinate esatte per l'irrorazione</div>
     </div>
     <div class="proc" id="up-proc" style="opacity: 0.45; pointer-events: none; transition: opacity 0.4s;">
-      <div class="prow" id="prow-1"><span class="ck w" id="pck-1">●</span> Ortomosaico ricostruito</div>
-      <div class="prow" id="prow-2"><span class="ck w" id="pck-2">●</span> Indice NDVI calcolato</div>
-      <div class="prow" id="prow-3"><span class="ck w" id="pck-3">●</span> 3 focolai geo-tracciati</div>
-      <div class="prow" id="prow-4"><span class="ck w" id="pck-4">●</span> Percorso ottimale pronto</div>
+      <div class="prow" id="prow-1"><span class="ck w" id="pck-1">●</span> Connessione al server cloud...</div>
+      <div class="prow" id="prow-2"><span class="ck w" id="pck-2">●</span> Download coordinate target...</div>
+      <div class="prow" id="prow-3"><span class="ck w" id="pck-3">●</span> Verifica valvole di irrorazione...</div>
+      <div class="prow" id="prow-4"><span class="ck w" id="pck-4">●</span> Mappa di guida pronta</div>
     </div>
   </div>
   <div class="foot" id="up-foot">
-    <button class="btn btn-dark" id="up-btn" disabled onclick="go('map')" style="opacity: 0.4; pointer-events: none; transition: all 0.3s;">Importa Mappa Campo</button>
+    <button class="btn btn-dark" id="up-btn" disabled onclick="go('map')" style="opacity: 0.4; pointer-events: none; transition: all 0.3s;">Vedi Punti Irrorazione</button>
   </div>
 </section>
 
 <!-- ══════════ Screen 2: Mappa ══════════ -->
 <section class="screen" id="s-map">
   <div class="mapcard">
-    <div class="maploading"><div class="spin"></div>Carico la mappa satellitare…</div>
+    <div class="maploading"><div class="spin"></div>Carico mappa di intervento…</div>
     <div id="leafmap" class="leafbox"></div>
-    <div class="map-pill">Mappa NDVI · 0.31–0.88</div>
+    <div class="map-pill">Punti di Irrorazione Rilevati</div>
     <div class="leg">
-      <div class="row"><span class="sw" style="background:#6fa15c"></span>Coltura sana</div>
-      <div class="row"><span class="sw" style="background:#e3b94a"></span>Stress / sospetto</div>
-      <div class="row"><span class="sw" style="background:#d98a6f"></span>Focolaio (target)</div>
+      <div class="row"><span class="sw" style="background:#d98a6f"></span>Zona da irrorare</div>
     </div>
   </div>
   <div class="statbar">
-    <div class="stat"><div class="n">2.1</div><div class="l">ettari totali</div></div>
-    <div class="stat"><div class="n" style="color:#c98a4a">0.18</div><div class="l">da trattare</div></div>
-    <div class="stat"><div class="n g">−91%</div><div class="l">fitofarmaco</div></div>
+    <div class="stat"><div class="n">3</div><div class="l">punti target</div></div>
+    <div class="stat"><div class="n" style="color:#c98a4a">84 m²</div><div class="l">superficie irrorazione</div></div>
+    <div class="stat"><div class="n g">−91%</div><div class="l">fitofarmaco risparmiato</div></div>
   </div>
-  <div class="foot"><button class="btn btn-dark" onclick="go('cabin')">Avvia navigazione</button></div>
+  <div class="foot"><button class="btn btn-dark" onclick="go('cabin')">Avvia Guida Irrorazione</button></div>
 </section>
 
 <!-- ══════════ Screen 3: Navigazione ══════════ -->
@@ -442,7 +440,7 @@
   function toggleDrive(){try{ensureAudio();}catch(e){}if(timer){stopDrive();playBtn.innerHTML='&#9654; Riprendi';}else{if(idx>=route.length)idx=0;startDrive();}}
   function resetDrive(){stopDrive();idx=0;last='go';playBtn.innerHTML='&#9654; Simula percorso';if(trk)trk.setLatLng(route[0]);if(map3)map3.setView(route[0],18);applyState(route[0]);}
 
-  /* ── Interactive Drone Upload ── */
+  /* ── Interactive Target Synchronization ── */
   let surveyUploading = false;
   let surveyCompleted = false;
 
@@ -465,13 +463,13 @@
     drop.style.borderColor = 'var(--wait)';
     dropIc.innerHTML = '⚡';
     dropIc.style.animation = 'rot 1.5s linear infinite';
-    dropT.textContent = 'Associazione in corso...';
-    dropD.textContent = 'Connessione al canale telemetrico del drone';
+    dropT.textContent = 'Connessione al Cloud...';
+    dropD.textContent = 'Contatto cloud server FITOAPP';
     proc.style.opacity = '1';
 
     tone(440, 0.1, 'sine', 0.08);
 
-    // Step 1: Connection and download start
+    // Step 1: Connecting to cloud...
     setTimeout(() => {
       document.getElementById('pck-1').className = 'ck';
       document.getElementById('pck-1').innerHTML = '✓';
@@ -479,11 +477,11 @@
       
       document.getElementById('pck-2').className = 'ck loading';
       document.getElementById('pck-2').innerHTML = '';
-      dropT.textContent = 'Scaricamento rilievo...';
-      dropD.textContent = 'Download immagini multispettrali e traccia GPS';
+      dropT.textContent = 'Scaricamento coordinate...';
+      dropD.textContent = 'Download dei punti target geo-referenziati';
     }, 1000);
 
-    // Step 2: Index calculation and count-up
+    // Step 2: Download targets...
     setTimeout(() => {
       document.getElementById('pck-2').className = 'ck';
       document.getElementById('pck-2').innerHTML = '✓';
@@ -491,21 +489,22 @@
       
       document.getElementById('pck-3').className = 'ck loading';
       document.getElementById('pck-3').innerHTML = '';
-      dropT.textContent = 'Calcolo indici vegetazionali...';
-      dropD.textContent = 'Analisi fotometrica NDVI sulle frequenze del NIR';
+      dropT.textContent = 'Verifica valvole...';
+      dropD.textContent = 'Configurazione spruzzatori automatici tractor-link';
       
-      let h = 0.0;
+      // Count-up target points
+      let pt = 0;
       const countInterval = setInterval(() => {
-        h = parseFloat((h + 0.1).toFixed(1));
-        if (h >= 2.1) {
-          h = 2.1;
+        pt += 1;
+        if (pt >= 3) {
+          pt = 3;
           clearInterval(countInterval);
         }
-        upNum.textContent = h.toFixed(1);
-      }, 40);
+        upNum.textContent = pt;
+      }, 350);
     }, 2000);
 
-    // Step 3: Trajectory planning
+    // Step 3: Trajectory load...
     setTimeout(() => {
       document.getElementById('pck-3').className = 'ck';
       document.getElementById('pck-3').innerHTML = '✓';
@@ -513,29 +512,39 @@
       
       document.getElementById('pck-4').className = 'ck loading';
       document.getElementById('pck-4').innerHTML = '';
-      dropT.textContent = 'Ottimizzazione traiettorie...';
-      dropD.textContent = 'Creazione del piano di trattamento mirato';
+      dropT.textContent = 'Calcolo percorso...';
+      dropD.textContent = 'Ottimizzazione traiettoria di guida per il trattore';
     }, 3200);
 
-    // Step 4: Finished
+    // Step 4: Finished!
     setTimeout(() => {
       document.getElementById('pck-4').className = 'ck';
       document.getElementById('pck-4').innerHTML = '✓';
       
-      // Joy sound
       tone(880, 0.1, 'sine', 0.08, 0);
       tone(1100, 0.15, 'sine', 0.08, 0.12);
 
       upAurora.style.opacity = '0.95';
       upLabel.textContent = 'Campo Nord 04';
-      upSub.textContent = 'rilievo completato';
+      upSub.textContent = '3 punti target da irrorare';
       
       drop.style.borderColor = 'var(--go)';
       drop.style.background = 'rgba(79, 180, 90, 0.08)';
       dropIc.innerHTML = '✅';
       dropIc.style.animation = 'none';
-      dropT.textContent = 'Elaborazione Completata';
-      dropD.textContent = 'Percorso pronto. Il piano ha ridotto i focolai';
+      dropT.textContent = 'Sincronizzazione Completata';
+      dropD.textContent = 'Tutti i target di irrorazione caricati nella guida!';
+
+      const btn = document.getElementById('up-btn');
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+      btn.textContent = 'Vedi Punti Irrorazione';
+
+      surveyCompleted = true;
+      surveyUploading = false;
+    }, 4500);
+  }extContent = 'Percorso pronto. Il piano ha ridotto i focolai';
 
       const btn = document.getElementById('up-btn');
       btn.disabled = false;
