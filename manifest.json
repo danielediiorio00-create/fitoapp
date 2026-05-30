@@ -1,0 +1,19 @@
+{
+  "name": "FITOAPP — Guida di Precisione",
+  "short_name": "FITOAPP",
+  "description": "Navigazione guidata per trattamenti fitosanitari di precisione con droni e mappe NDVI.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e9ebe6",
+  "theme_color": "#2b2f29",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

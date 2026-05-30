@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>FITOAPP — Guida di Precisione</title>
+<meta name="description" content="Navigazione guidata per trattamenti fitosanitari di precisione con droni e mappe NDVI.">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2b2f29">
+
+<!-- iOS specific -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FITOAPP">
+<link rel="apple-touch-icon" href="icon-512.png">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&display=swap');
+  :root{
+    --bg:#e9ebe6;--ink:#2b2f29;--ink-soft:#6e7468;
+    --glass:rgba(255,255,255,.55);--glass-strong:rgba(255,255,255,.80);
+    --line:rgba(43,47,41,.08);--lime:#cde85a;--lime-ink:#3f4a12;
+    --sage-2:#a8c98a;--sage-3:#6fa15c;--sage-4:#3f7d4f;
+    --font:'Outfit',-apple-system,sans-serif;
+    --go:#4fb45a;--wait:#e7b53c;--stop:#dd4b3e;
+    --safe-t:env(safe-area-inset-top, 0px);
+    --safe-b:env(safe-area-inset-bottom, 0px);
+    --safe-l:env(safe-area-inset-left, 0px);
+    --safe-r:env(safe-area-inset-right, 0px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{background:var(--bg);font-family:var(--font);color:var(--ink);display:flex;flex-direction:column;font-weight:300}
+
+  /* ── Tab bar ── */
+  .tabbar{
+    display:flex;
+    flex-shrink:0;
+    background:var(--glass-strong);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);
+    padding:6px 8px calc(6px + var(--safe-b));
+    gap:4px;
+    z-index:100;
+  }
+  .tabbar button{
+    flex:1;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:none;border:none;
+    font-family:var(--font);font-size:10px;font-weight:400;
+    color:var(--ink-soft);cursor:pointer;
+    padding:6px 4px;border-radius:14px;
+    transition:all .25s;
+  }
+  .tabbar button .ico{font-size:22px;line-height:1}
+  .tabbar button.on{color:var(--sage-4);font-weight:600;background:rgba(63,125,79,.1)}
+
+  /* ── Screens ── */
+  .screen{display:none;flex-direction:column;flex:1;overflow:hidden;animation:fade .4s ease}
+  .screen.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ── Screen 1: Upload / Rilievo ── */
+  .hero{
+    position:relative;margin:0;overflow:hidden;background:#fff;
+    flex-shrink:0;min-height:220px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding-top:var(--safe-t);
+  }
+  .aurora{position:absolute;inset:0;filter:blur(2px)}
+  .aurora::before,.aurora::after{content:"";position:absolute;border-radius:50%;filter:blur(46px);opacity:.95}
+  .aurora::before{width:340px;height:340px;background:radial-gradient(circle,var(--sage-3),var(--sage-2) 45%,transparent 70%);top:-30px;left:50%;transform:translateX(-50%)}
+  .aurora::after{width:260px;height:260px;background:radial-gradient(circle,var(--sage-4),transparent 65%);top:40px;left:42%;opacity:.6}
+  .hero-label{position:relative;z-index:3;font-size:14px;font-weight:400;color:rgba(255,255,255,.92);margin-top:8px}
+  .hero-num{position:relative;z-index:3;font-weight:300;color:#fff;line-height:.9;margin:10px 0 2px;font-size:88px;letter-spacing:2px;background-image:radial-gradient(rgba(255,255,255,.95) 32%, transparent 36%);background-size:7px 7px;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 8px rgba(40,70,40,.25))}
+  .hero-sub{position:relative;z-index:3;font-size:13px;color:rgba(255,255,255,.85);font-weight:300}
+
+  .up-body{flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding:16px 22px 0;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .drop{border:1.5px dashed rgba(63,125,79,.4);border-radius:30px;padding:30px 20px;text-align:center;background:linear-gradient(180deg,rgba(168,201,138,.18),rgba(255,255,255,.4))}
+  .drop .ic{font-size:38px;margin-bottom:10px}
+  .drop .t{font-size:18px;font-weight:500}
+  .drop .d{font-size:12.5px;color:var(--ink-soft);margin-top:6px;font-weight:300}
+  .proc{display:flex;flex-direction:column;gap:12px}
+  .prow{display:flex;align-items:center;gap:12px;font-size:13.5px;font-weight:300}
+  .prow .ck{width:24px;height:24px;border-radius:50%;background:var(--sage-4);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;color:#fff}
+  .prow .ck.w{background:#fff;border:1.5px solid var(--line);color:var(--ink-soft)}
+
+  .foot{flex-shrink:0;padding:16px 18px 8px}
+  .btn{width:100%;border:none;border-radius:30px;padding:18px;font-family:var(--font);font-weight:500;font-size:15.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .15s, box-shadow .2s}
+  .btn:active{transform:scale(.97)}
+  .btn-dark{background:#2b2f29;color:#f3f4f0}
+
+  /* ── Screen 2: Mappa ── */
+  .mapcard{position:relative;flex:1;overflow:hidden;background:#dfe4da;border-bottom:1px solid var(--line)}
+  .leafbox{position:absolute;inset:0;width:100%;height:100%;z-index:1;background:#dfe4da}
+  .maploading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:0;color:var(--ink-soft);font-size:13px;font-weight:300}
+  .spin{width:30px;height:30px;border:3px solid rgba(63,125,79,.25);border-top-color:var(--sage-4);border-radius:50%;animation:rot 1s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+
+  .leaflet-control-zoom{border:none!important;box-shadow:0 4px 14px rgba(40,50,35,.18)!important;margin:14px!important}
+  .leaflet-control-zoom a{background:var(--glass-strong)!important;backdrop-filter:blur(8px);color:var(--ink)!important;border:1px solid var(--line)!important;width:36px!important;height:36px!important;line-height:36px!important;font-weight:400!important;font-size:18px!important}
+  .leaflet-control-zoom a:first-child{border-radius:14px 14px 0 0!important}
+  .leaflet-control-zoom a:last-child{border-radius:0 0 14px 14px!important}
+  .leaflet-control-attribution{background:rgba(255,255,255,.6)!important;backdrop-filter:blur(6px);font-size:8.5px!important;color:var(--ink-soft)!important;border-radius:8px 0 0 0!important;padding:2px 6px!important}
+  .leaflet-control-attribution a{color:var(--sage-4)!important}
+
+  .map-pill{position:absolute;top:calc(10px + var(--safe-t));left:50%;transform:translateX(-50%);background:var(--glass-strong);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:999px;padding:10px 18px;font-size:13px;font-weight:400;z-index:5;color:var(--ink)}
+  .leg{position:absolute;left:14px;bottom:14px;background:var(--glass-strong);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:18px;padding:11px 13px;z-index:5}
+  .leg .row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:11.5px;font-weight:300}
+  .leg .sw{width:13px;height:13px;border-radius:5px}
+
+  .foc-halo{position:absolute;inset:-12px;border-radius:50%;background:radial-gradient(circle,rgba(239,107,74,.55),rgba(255,179,71,.35) 55%,rgba(255,179,71,0) 78%);filter:blur(2px)}
+  .foc-ring{position:absolute;inset:14px;border-radius:50%;border:2.5px dashed #fff;box-shadow:0 0 0 2px rgba(58,36,16,.45), 0 2px 8px rgba(0,0,0,.35)}
+  .foc-core{position:absolute;top:50%;left:50%;width:24px;height:24px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#e05636,#c8462f);box-shadow:0 0 14px rgba(200,70,47,.8);animation:focpulse 1.8s ease-in-out infinite}
+  @keyframes focpulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.95}50%{transform:translate(-50%,-50%) scale(1.18);opacity:1}}
+  .trk{width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid #2b6cff;box-shadow:0 0 0 6px rgba(43,108,255,.25),0 4px 10px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:15px}
+
+  .statbar{display:flex;gap:10px;padding:10px 14px 0;flex-shrink:0}
+  .stat{flex:1;background:var(--glass-strong);border:1px solid var(--line);border-radius:22px;padding:14px 12px;text-align:center;backdrop-filter:blur(8px)}
+  .stat .n{font-size:24px;font-weight:300;letter-spacing:-.5px}
+  .stat .n.g{color:var(--sage-4)}
+  .stat .l{font-size:9.5px;color:var(--ink-soft);margin-top:5px;font-weight:300}
+
+  /* ── Screen 3: Cabin / Navigazione ── */
+  .cabin{background:#11140f}
+  .cabin-top{padding:calc(10px + var(--safe-t)) 22px 8px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+  .cabin-top .who{font-size:12px;color:rgba(255,255,255,.7);font-weight:400}
+  .cabin-top .spk{font-size:22px;cursor:pointer;opacity:.85}
+  .verdict{flex-shrink:0;text-align:center;padding:2px 0 10px}
+  .verdict .v{font-size:36px;font-weight:600;letter-spacing:.5px;line-height:1;transition:color .4s}
+  .verdict .sub{font-size:13px;font-weight:300;margin-top:4px;transition:color .4s}
+
+  .frameWrap{position:relative;flex:1;margin:0 14px;border-radius:30px;padding:16px;transition:background .45s, box-shadow .45s}
+  .frameWrap.go{background:radial-gradient(circle at 50% 50%, rgba(79,180,90,0), rgba(79,180,90,.35));box-shadow:inset 0 0 0 3px rgba(79,180,90,.9), inset 0 0 60px 8px rgba(79,180,90,.65), 0 0 50px rgba(79,180,90,.5)}
+  .frameWrap.wait{background:radial-gradient(circle at 50% 50%, rgba(231,181,60,0), rgba(231,181,60,.35));box-shadow:inset 0 0 0 3px rgba(231,181,60,.9), inset 0 0 60px 8px rgba(231,181,60,.6), 0 0 50px rgba(231,181,60,.45)}
+  .frameWrap.stop{background:radial-gradient(circle at 50% 50%, rgba(221,75,62,0), rgba(221,75,62,.4));box-shadow:inset 0 0 0 3px rgba(221,75,62,.95), inset 0 0 64px 10px rgba(221,75,62,.7), 0 0 56px rgba(221,75,62,.55)}
+  .frameWrap.go.pulse{animation:glowGo 1.5s ease-in-out infinite}
+  .frameWrap.stop.pulse{animation:glowStop 1s ease-in-out infinite}
+  @keyframes glowGo{0%,100%{box-shadow:inset 0 0 0 3px rgba(79,180,90,.9), inset 0 0 50px 6px rgba(79,180,90,.5), 0 0 40px rgba(79,180,90,.4)}50%{box-shadow:inset 0 0 0 4px rgba(79,180,90,1), inset 0 0 85px 14px rgba(79,180,90,.9), 0 0 75px rgba(79,180,90,.75)}}
+  @keyframes glowStop{0%,100%{box-shadow:inset 0 0 0 3px rgba(221,75,62,.95), inset 0 0 55px 8px rgba(221,75,62,.6), 0 0 46px rgba(221,75,62,.45)}50%{box-shadow:inset 0 0 0 5px rgba(221,75,62,1), inset 0 0 95px 16px rgba(221,75,62,.97), 0 0 85px rgba(221,75,62,.85)}}
+  .frameWrap .leafbox{position:absolute;inset:16px;width:auto;height:auto;border-radius:18px;overflow:hidden;z-index:1}
+  .navband{position:absolute;left:16px;right:16px;bottom:16px;z-index:6;display:flex;justify-content:center}
+  .navchip{background:rgba(17,20,15,.72);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:9px 16px;font-size:12.5px;font-weight:400}
+  .gpschip{position:absolute;left:16px;top:16px;z-index:6;background:rgba(17,20,15,.72);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:7px 12px;font-size:10.5px;font-weight:400;display:flex;align-items:center;gap:7px}
+  .gpschip .live{width:7px;height:7px;border-radius:50%;background:#4fb45a;animation:blink 1.3s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .ctl{display:flex;gap:9px;padding:10px 16px 4px;flex-shrink:0}
+  .ctl button{flex:1;font-family:var(--font);font-size:13.5px;font-weight:500;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:14px;cursor:pointer;color:#fff}
+  .ctl button.run{background:#f3f4f0;color:#11140f;border-color:#f3f4f0}
+  .cabin-foot{flex-shrink:0;padding:4px 16px 8px}
+  .cabin-foot .btn{padding:15px;font-size:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);color:#fff}
+
+  /* ── Splash Screen ── */
+  .splash{
+    position:fixed;inset:0;z-index:999;
+    background:linear-gradient(135deg,#2b3f29 0%,#1a2b18 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:18px;
+    transition:opacity .5s ease, visibility .5s;
+  }
+  .splash.hide{opacity:0;visibility:hidden;pointer-events:none}
+  .splash img{width:90px;height:90px;border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .splash h1{font-family:var(--font);font-weight:600;font-size:28px;color:#f3f4f0;letter-spacing:1px}
+  .splash p{font-family:var(--font);font-weight:300;font-size:13px;color:rgba(255,255,255,.55)}
+  .splash .spin{border-color:rgba(255,255,255,.15);border-top-color:rgba(255,255,255,.7);width:24px;height:24px;margin-top:12px}
+</style>
+</head>
+<body>
+
+<!-- Splash -->
+<div class="splash" id="splash">
+  <img src="icon-512.png" alt="FITOAPP">
+  <h1>FITOAPP</h1>
+  <p>Guida di Precisione</p>
+  <div class="spin"></div>
+</div>
+
+<!-- ══════════ Screen 1: Rilievo ══════════ -->
+<section class="screen" id="s-upload">
+  <div class="hero">
+    <div class="aurora"></div>
+    <div class="hero-label">Campo Nord 04</div>
+    <div class="hero-num">2.1</div>
+    <div class="hero-sub">ettari rilevati</div>
+  </div>
+  <div class="up-body">
+    <div class="drop"><div class="ic">&#128752;</div><div class="t">Carica rilievo drone</div><div class="d">Immagini multispettrali + traccia GPS</div></div>
+    <div class="proc">
+      <div class="prow"><span class="ck">&#10003;</span> Ortomosaico ricostruito</div>
+      <div class="prow"><span class="ck">&#10003;</span> Indice NDVI calcolato</div>
+      <div class="prow"><span class="ck">&#10003;</span> 3 focolai geo-tracciati</div>
+      <div class="prow"><span class="ck w">&#9679;</span> Percorso ottimale pronto</div>
+    </div>
+  </div>
+  <div class="foot"><button class="btn btn-dark" onclick="go('map')">Vedi la mappa</button></div>
+</section>
+
+<!-- ══════════ Screen 2: Mappa ══════════ -->
+<section class="screen" id="s-map">
+  <div class="mapcard">
+    <div class="maploading"><div class="spin"></div>Carico la mappa satellitare…</div>
+    <div id="leafmap" class="leafbox"></div>
+    <div class="map-pill">Mappa NDVI · 0.31–0.88</div>
+    <div class="leg">
+      <div class="row"><span class="sw" style="background:#6fa15c"></span>Coltura sana</div>
+      <div class="row"><span class="sw" style="background:#e3b94a"></span>Stress / sospetto</div>
+      <div class="row"><span class="sw" style="background:#d98a6f"></span>Focolaio (target)</div>
+    </div>
+  </div>
+  <div class="statbar">
+    <div class="stat"><div class="n">2.1</div><div class="l">ettari totali</div></div>
+    <div class="stat"><div class="n" style="color:#c98a4a">0.18</div><div class="l">da trattare</div></div>
+    <div class="stat"><div class="n g">−91%</div><div class="l">fitofarmaco</div></div>
+  </div>
+  <div class="foot"><button class="btn btn-dark" onclick="go('cabin')">Avvia navigazione</button></div>
+</section>
+
+<!-- ══════════ Screen 3: Navigazione ══════════ -->
+<section class="screen cabin" id="s-cabin">
+  <div class="cabin-top"><span class="who">Navigazione · Campo Nord 04</span><span class="spk" id="spk" onclick="toggleVoice()">&#128266;</span></div>
+  <div class="verdict">
+    <div class="v" id="vWord" style="color:var(--go)">CHIUDI</div>
+    <div class="sub" id="vSub" style="color:rgba(255,255,255,.7)">coltura sana — pompa spenta</div>
+  </div>
+  <div class="frameWrap go pulse" id="frame">
+    <div class="gpschip"><span class="live"></span>GPS ±1.4 m</div>
+    <div id="navmap" class="leafbox"></div>
+    <div class="navband"><div class="navchip" id="navChip">prossimo focolaio tra 18 m</div></div>
+  </div>
+  <div class="ctl">
+    <button class="run" id="playBtn" onclick="toggleDrive()">&#9654; Simula percorso</button>
+    <button onclick="resetDrive()">&#8635; Riavvia</button>
+  </div>
+  <div class="cabin-foot"><button class="btn" onclick="go('map')">Torna alla mappa</button></div>
+</section>
+
+<!-- ══════════ Tab Bar ══════════ -->
+<nav class="tabbar">
+  <button id="t-upload" class="on" onclick="go('upload')"><span class="ico">🛰</span>Rilievo</button>
+  <button id="t-map" onclick="go('map')"><span class="ico">🗺</span>Mappa</button>
+  <button id="t-cabin" onclick="go('cabin')"><span class="ico">🚜</span>Guida</button>
+</nav>
+
+<script>
+  /* ── Register Service Worker ── */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+  }
+
+  /* ── Splash dismiss ── */
+  window.addEventListener('load', () => {
+    setTimeout(() => document.getElementById('splash').classList.add('hide'), 1200);
+  });
+
+  /* ── Data ── */
+  const FOCI=[
+    {lat:41.38900, lng:15.55980, r:34},
+    {lat:41.38840, lng:15.56080, r:26},
+    {lat:41.38955, lng:15.56075, r:24}
+  ];
+  const SAT='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+  const OSM='https://tile.openstreetmap.org/{z}/{y}/{x}.png';
+
+  function addTiles(map){
+    let failed=0;
+    const sat=L.tileLayer(SAT,{maxZoom:19,attribution:'Imagery &copy; Esri'});
+    sat.on('tileerror',()=>{ if(++failed>4 && !map._osm){ map._osm=true; L.tileLayer(OSM,{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);} });
+    sat.on('load',()=>{document.querySelectorAll('.maploading').forEach(x=>x.style.display='none');});
+    sat.addTo(map);
+  }
+  function addFoci(map){
+    const rings=[];
+    FOCI.forEach(f=>{
+      const icon=L.divIcon({className:'foc-div',html:'<div class="foc-halo"></div><div class="foc-ring"></div><div class="foc-core"></div>',iconSize:[110,110],iconAnchor:[55,55]});
+      L.marker([f.lat,f.lng],{icon:icon,interactive:false}).addTo(map);
+      rings.push(L.circle([f.lat,f.lng],{radius:f.r,opacity:0,fillOpacity:0}).addTo(map));
+    });
+    return L.featureGroup(rings);
+  }
+
+  /* ── Map Screen ── */
+  let map2=null;
+  function initMap2(){
+    if(map2){setTimeout(()=>map2.invalidateSize(),120);return;}
+    map2=L.map('leafmap',{zoomControl:true,attributionControl:true}).setView([FOCI[0].lat,FOCI[0].lng],17);
+    addTiles(map2);
+    const grp=addFoci(map2);
+    setTimeout(()=>{map2.invalidateSize();map2.fitBounds(grp.getBounds(),{padding:[45,45],maxZoom:18});},220);
+  }
+
+  /* ── Navigation route ── */
+  const wp=[
+    {lat:41.38980,lng:15.55930},
+    {lat:41.38900,lng:15.55980},
+    {lat:41.38870,lng:15.56030},
+    {lat:41.38840,lng:15.56080},
+    {lat:41.38900,lng:15.56080},
+    {lat:41.38955,lng:15.56075},
+    {lat:41.39010,lng:15.56090}
+  ];
+  function densify(pts,n){const o=[];for(let s=0;s<pts.length-1;s++){for(let k=0;k<n;k++){const t=k/n;o.push([pts[s].lat+(pts[s+1].lat-pts[s].lat)*t, pts[s].lng+(pts[s+1].lng-pts[s].lng)*t]);}}o.push([pts[pts.length-1].lat,pts[pts.length-1].lng]);return o;}
+  const route=densify(wp,40);
+
+  function metresTo(a,b){const R=6371000,toR=Math.PI/180;const dLat=(b.lat-a.lat)*toR,dLng=(b.lng-a.lng)*toR;const la1=a.lat*toR,la2=b.lat*toR;const x=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+  function nearestEdge(p){let best=1e9;FOCI.forEach(f=>{const d=metresTo({lat:p[0],lng:p[1]},{lat:f.lat,lng:f.lng})-f.r;best=Math.min(best,d);});return best;}
+
+  /* ── Nav Map ── */
+  let map3=null, trk=null;
+  function initMap3(){
+    if(map3){setTimeout(()=>map3.invalidateSize(),120);return;}
+    map3=L.map('navmap',{zoomControl:false,attributionControl:true,dragging:true}).setView(route[0],18);
+    addTiles(map3);
+    addFoci(map3);
+    const tIcon=L.divIcon({className:'trk-wrap',html:'<div class="trk">🚜</div>',iconSize:[30,30],iconAnchor:[15,15]});
+    trk=L.marker(route[0],{icon:tIcon,interactive:false}).addTo(map3);
+    setTimeout(()=>{map3.invalidateSize();map3.setView(route[0],18);},220);
+  }
+
+  /* ── State Engine ── */
+  const frame=document.getElementById('frame'),vWord=document.getElementById('vWord'),
+        vSub=document.getElementById('vSub'),navChip=document.getElementById('navChip'),
+        playBtn=document.getElementById('playBtn'),spk=document.getElementById('spk');
+  let voiceOn=true, last='go';
+  function toggleVoice(){voiceOn=!voiceOn;spk.innerHTML=voiceOn?'&#128266;':'&#128263;';}
+
+  let actx=null;
+  function beep(f,d){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.type='sine';o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.05,actx.currentTime);o.start();o.stop(actx.currentTime+d);}catch(e){}}
+  function say(t){if(!voiceOn)return;try{const u=new SpeechSynthesisUtterance(t);u.lang='it-IT';u.rate=1.05;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+
+  function applyState(p){
+    const d=nearestEdge(p);const m=Math.max(0,Math.round(d));
+    let st = d<0 ? 'go' : (d<14 ? 'wait' : 'stop');
+    if(st==='go'){
+      frame.className='frameWrap go pulse';
+      vWord.textContent='SPRUZZA';vWord.style.color='var(--go)';
+      vSub.textContent='sei nel focolaio — pompa aperta';vSub.style.color='rgba(190,240,190,.9)';
+      navChip.textContent='trattamento in corso';
+    }else if(st==='wait'){
+      frame.className='frameWrap wait';
+      vWord.textContent='PRONTO';vWord.style.color='var(--wait)';
+      vSub.textContent='focolaio vicino — preparati';vSub.style.color='rgba(245,225,150,.9)';
+      navChip.textContent='apri tra '+m+' m';
+    }else{
+      frame.className='frameWrap stop pulse';
+      vWord.textContent='STOP';vWord.style.color='var(--stop)';
+      vSub.textContent='coltura sana — pompa spenta';vSub.style.color='rgba(245,180,170,.9)';
+      navChip.textContent='prossimo focolaio tra '+m+' m';
+    }
+    if(st!==last){
+      if(st==='wait'){beep(680,.12);say('Focolaio vicino, preparati');}
+      if(st==='go'){beep(520,.16);setTimeout(()=>beep(520,.16),190);say('Spruzza, sei nel focolaio');}
+      if(st==='stop'&&last==='go'){beep(300,.18);say('Stop, chiudi la pompa');}
+      last=st;
+    }
+  }
+
+  let idx=0,timer=null;
+  function step(){
+    if(idx>=route.length){stopDrive();playBtn.innerHTML='&#9654; Simula percorso';return;}
+    const p=route[idx];
+    if(trk) trk.setLatLng(p);
+    if(map3) map3.panTo(p,{animate:true,duration:.18});
+    applyState(p);
+    idx++;
+  }
+  function startDrive(){if(timer)return;if(actx&&actx.state==='suspended')actx.resume();playBtn.innerHTML='&#10073;&#10073; Pausa';timer=setInterval(step,110);}
+  function stopDrive(){if(timer){clearInterval(timer);timer=null;}}
+  function toggleDrive(){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();}catch(e){}if(timer){stopDrive();playBtn.innerHTML='&#9654; Riprendi';}else{if(idx>=route.length)idx=0;startDrive();}}
+  function resetDrive(){stopDrive();idx=0;last='go';playBtn.innerHTML='&#9654; Simula percorso';if(trk)trk.setLatLng(route[0]);if(map3)map3.setView(route[0],18);applyState(route[0]);}
+
+  /* ── Navigation ── */
+  function go(s){
+    document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-'+s).classList.add('active');
+    document.querySelectorAll('.tabbar button').forEach(e=>e.classList.remove('on'));
+    document.getElementById('t-'+s).classList.add('on');
+    if(s!=='cabin') stopDrive();
+    if(s==='map') initMap2();
+    if(s==='cabin'){ initMap3(); applyState(route[0]); }
+  }
+  go('upload');
+</script>
+</body>
+</html>
