@@ -1,0 +1,33 @@
+{
+ "field": "Vigneto B7 \u2014 Galizia, Spagna",
+ "center": {
+  "lat": 41.9573113,
+  "lng": -8.7924234
+ },
+ "bounds": [
+  [
+   41.9568244,
+   -8.7938456
+  ],
+  [
+   41.9585594,
+   -8.7919225
+  ]
+ ],
+ "stats": {
+  "vines_total": 133,
+  "vines_diseased": 38,
+  "foci": 11,
+  "field_area_m2": 15219,
+  "treated_area_m2": 1610,
+  "saved_pct": 89.4,
+  "ndvi_diseased": 0.763,
+  "ndvi_healthy": 0.769
+ },
+ "source": {
+  "name": "Precision viticulture dataset \u2014 Northern Spain (2022)",
+  "doi": "10.5281/zenodo.10362568",
+  "license": "CC-BY-4.0",
+  "attribution": "V\u00e9lez, Ariza-Sent\u00eds & Valente (2024) \u2014 Precision viticulture dataset, Zenodo 10362568, CC-BY-4.0"
+ }
+}

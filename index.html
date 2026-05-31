@@ -15,6 +15,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FITOAPP">
 <link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon-512.png">
+<meta name="author" content="Dati: Vélez, Ariza-Sentís & Valente (2024), Zenodo 10362568, CC-BY-4.0">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -128,6 +130,9 @@
   .leg{position:absolute;left:14px;bottom:14px;background:var(--glass-strong);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:18px;padding:11px 13px;z-index:5}
   .leg .row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:11.5px;font-weight:300}
   .leg .sw{width:13px;height:13px;border-radius:5px}
+  .layer-toggle{position:absolute;right:14px;top:calc(10px + var(--safe-t));z-index:6;background:var(--glass-strong);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-family:var(--font);font-size:11.5px;font-weight:500;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:5px}
+  .credit{position:absolute;right:8px;bottom:8px;z-index:5;max-width:62%;text-align:right;font-size:8.5px;line-height:1.25;font-weight:300;color:var(--ink-soft);background:rgba(255,255,255,.45);backdrop-filter:blur(4px);border-radius:7px;padding:3px 6px}
+  @media (prefers-color-scheme: dark){ .credit{background:rgba(20,24,17,.5)} }
 
   .foc-halo{position:absolute;inset:-12px;border-radius:50%;background:radial-gradient(circle,rgba(239,107,74,.55),rgba(255,179,71,.35) 55%,rgba(255,179,71,0) 78%);filter:blur(2px)}
   .foc-ring{position:absolute;inset:14px;border-radius:50%;border:2.5px dashed #fff;box-shadow:0 0 0 2px rgba(58,36,16,.45), 0 2px 8px rgba(0,0,0,.35)}
@@ -227,22 +232,25 @@
   <div class="mapcard">
     <div class="maploading"><div class="spin"></div>Carico mappa di intervento…</div>
     <div id="leafmap" class="leafbox"></div>
-    <div class="map-pill">Punti di Irrorazione Rilevati</div>
+    <div class="map-pill">Focolai di Esca rilevati</div>
+    <button class="layer-toggle" onclick="cycleOverlay()" title="Cambia vista del campo">🛰 <span id="ov-label">Drone RGB</span></button>
     <div class="leg">
-      <div class="row"><span class="sw" style="background:#d98a6f"></span>Zona da irrorare</div>
+      <div class="row"><span class="sw" style="background:#d98a6f"></span>Focolaio da irrorare</div>
+      <div class="row" id="leg-ndvi" style="display:none"><span class="sw" style="background:linear-gradient(90deg,#a50026,#ffffbf,#1a9850)"></span>NDVI (vigore)</div>
     </div>
+    <div class="credit" id="map-attrib"></div>
   </div>
   <div class="statbar">
-    <div class="stat"><div class="n">3</div><div class="l">punti target</div></div>
-    <div class="stat"><div class="n" style="color:#c98a4a">84 m²</div><div class="l">superficie irrorazione</div></div>
-    <div class="stat"><div class="n g">−91%</div><div class="l">fitofarmaco risparmiato</div></div>
+    <div class="stat"><div class="n" id="st-foci">—</div><div class="l">focolai Esca</div></div>
+    <div class="stat"><div class="n" style="color:#c98a4a" id="st-area">— m²</div><div class="l">superficie irrorazione</div></div>
+    <div class="stat"><div class="n g" id="st-saved">—</div><div class="l">fitofarmaco risparmiato</div></div>
   </div>
   <div class="foot"><button class="btn btn-dark" onclick="go('cabin')">Avvia Guida Irrorazione</button></div>
 </section>
 
 <!-- ══════════ Screen 3: Navigazione ══════════ -->
 <section class="screen cabin" id="s-cabin">
-  <div class="cabin-top"><span class="who">Navigazione · Campo Nord 04</span><span class="spk" id="spk" onclick="toggleVoice()">&#128266;</span></div>
+  <div class="cabin-top"><span class="who" id="cabin-field">Navigazione · Campo Nord 04</span><span class="spk" id="spk" onclick="toggleVoice()">&#128266;</span></div>
   <div class="verdict">
     <div class="v" id="vWord" style="color:var(--go)">CHIUDI</div>
     <div class="sub" id="vSub" style="color:rgba(255,255,255,.7)">coltura sana — pompa spenta</div>
@@ -266,6 +274,8 @@
   <button id="t-cabin" onclick="go('cabin')"><span class="ico">🚜</span>Guida</button>
 </nav>
 
+<!-- Dati reali del rilievo (bundle JS: funziona anche via file://) -->
+<script src="data/data.js"></script>
 <script>
   /* ── Register Service Worker ── */
   if ('serviceWorker' in navigator) {
@@ -288,14 +298,60 @@
     setTimeout(() => document.getElementById('splash').classList.add('hide'), 1200);
   });
 
-  /* ── Data ── */
-  const FOCI=[
-    {lat:41.38900, lng:15.55980, r:34},
-    {lat:41.38840, lng:15.56080, r:26},
-    {lat:41.38955, lng:15.56075, r:24}
-  ];
+  /* ── Dati reali — rilievo UAV multispettrale (Zenodo, viticoltura di precisione) ──
+     Fonte: Vélez, Ariza-Sentís & Valente (2024), Zenodo 10362568, CC-BY-4.0.
+     Generati offline da tools/process_dataset.py (vedi cartella data/).        */
+  let FOCI=[];                 // focolai Esca reali ← data/targets.geojson
+  let META=null;              // statistiche/bounds ← data/meta.json
+  const overlays=[];          // imageOverlay attivi sulle mappe
+  let overlayMode='rgb';      // 'rgb' | 'ndvi' | 'off'
+  const OVERLAY_URL={rgb:'data/field.png', ndvi:'data/ndvi.png'};
   const SAT='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
   const OSM='https://tile.openstreetmap.org/{z}/{y}/{x}.png';
+
+  /* ── Caricamento del risultato del processing (una volta, in cache) ── */
+  let dataReady=null;
+  function applyData(tg, meta, rt){
+    META=meta;
+    FOCI=tg.features.map(f=>({lat:f.geometry.coordinates[1], lng:f.geometry.coordinates[0],
+                              r:f.properties.r, vines:f.properties.vines}));
+    const line=rt.features[0].geometry.coordinates;     // [[lng,lat],...]
+    wp=line.map(c=>({lat:c[1], lng:c[0]}));
+    route=densify(wp,40);
+    applyRealUI();
+    return meta;
+  }
+  function loadRealData(){
+    if(dataReady) return dataReady;
+    // 1) bundle JS incorporato (funziona anche via file://, senza fetch/CORS)
+    if(window.FITO_DATA){
+      const d=window.FITO_DATA;
+      dataReady=Promise.resolve(applyData(d.targets, d.meta, d.route));
+      return dataReady;
+    }
+    // 2) fallback: fetch dei file (quando servito via http/https)
+    dataReady=Promise.all([
+      fetch('data/targets.geojson').then(r=>r.json()),
+      fetch('data/meta.json').then(r=>r.json()),
+      fetch('data/route.geojson').then(r=>r.json())
+    ]).then(([tg,meta,rt])=>applyData(tg,meta,rt))
+      .catch(e=>{ console.warn('Dati reali non caricati:', e); return null; });
+    return dataReady;
+  }
+
+  /* ── Riempie l'interfaccia coi numeri reali del dataset ── */
+  function applyRealUI(){
+    if(!META) return;
+    const s=META.stats, set=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;};
+    set('st-foci', s.foci);
+    set('st-area', s.treated_area_m2.toLocaleString('it-IT')+' m²');
+    set('st-saved', '−'+s.saved_pct+'%');
+    set('cabin-field', 'Navigazione · '+META.field);
+    set('map-attrib', META.source.attribution);
+    const sub=document.getElementById('up-sub');
+    // (il sottotitolo definitivo viene impostato a fine sincronizzazione)
+    sub.dataset.real=s.foci+' focolai Esca da trattare';
+  }
 
   function addTiles(map){
     let failed=0;
@@ -313,29 +369,46 @@
     });
     return L.featureGroup(rings);
   }
+  /* ── Overlay reale del campo (ortomosaico RGB / NDVI) sotto i focolai ── */
+  function addFieldOverlay(map){
+    if(!META || !META.bounds) return;
+    const url=OVERLAY_URL[overlayMode]||OVERLAY_URL.rgb;
+    const ov=L.imageOverlay(url, META.bounds, {opacity: overlayMode==='off'?0:0.9, interactive:false});
+    ov.addTo(map);
+    overlays.push(ov);
+  }
+  function setOverlayMode(mode){
+    overlayMode=mode;
+    overlays.forEach(ov=>{
+      ov.setOpacity(mode==='off'?0:0.9);
+      if(mode!=='off') ov.setUrl(OVERLAY_URL[mode]);
+    });
+    const lbl=document.getElementById('ov-label');
+    if(lbl) lbl.textContent = mode==='rgb'?'Drone RGB' : mode==='ndvi'?'NDVI' : 'Satellite';
+    const leg=document.getElementById('leg-ndvi');
+    if(leg) leg.style.display = mode==='ndvi'?'block':'none';
+  }
+  function cycleOverlay(){
+    const order=['rgb','ndvi','off'];
+    setOverlayMode(order[(order.indexOf(overlayMode)+1)%order.length]);
+  }
 
   /* ── Map Screen ── */
   let map2=null;
   function initMap2(){
     if(map2){setTimeout(()=>map2.invalidateSize(),120);return;}
-    map2=L.map('leafmap',{zoomControl:true,attributionControl:true}).setView([FOCI[0].lat,FOCI[0].lng],17);
+    const c=(META&&META.center)?[META.center.lat,META.center.lng]:(FOCI[0]?[FOCI[0].lat,FOCI[0].lng]:[41.956,-8.793]);
+    map2=L.map('leafmap',{zoomControl:true,attributionControl:true}).setView(c,18);
     addTiles(map2);
+    addFieldOverlay(map2);
     const grp=addFoci(map2);
-    setTimeout(()=>{map2.invalidateSize();map2.fitBounds(grp.getBounds(),{padding:[45,45],maxZoom:18});},220);
+    setTimeout(()=>{map2.invalidateSize(); if(grp.getLayers().length) map2.fitBounds(grp.getBounds(),{padding:[45,45],maxZoom:19});},220);
   }
 
-  /* ── Navigation route ── */
-  const wp=[
-    {lat:41.38980,lng:15.55930},
-    {lat:41.38900,lng:15.55980},
-    {lat:41.38870,lng:15.56030},
-    {lat:41.38840,lng:15.56080},
-    {lat:41.38900,lng:15.56080},
-    {lat:41.38955,lng:15.56075},
-    {lat:41.39010,lng:15.56090}
-  ];
+  /* ── Navigation route (popolato da data/route.geojson) ── */
+  let wp=[];
+  let route=[];
   function densify(pts,n){const o=[];for(let s=0;s<pts.length-1;s++){for(let k=0;k<n;k++){const t=k/n;o.push([pts[s].lat+(pts[s+1].lat-pts[s].lat)*t, pts[s].lng+(pts[s+1].lng-pts[s].lng)*t]);}}o.push([pts[pts.length-1].lat,pts[pts.length-1].lng]);return o;}
-  const route=densify(wp,40);
 
   function metresTo(a,b){const R=6371000,toR=Math.PI/180;const dLat=(b.lat-a.lat)*toR,dLng=(b.lng-a.lng)*toR;const la1=a.lat*toR,la2=b.lat*toR;const x=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
   function nearestEdge(p){let best=1e9;FOCI.forEach(f=>{const d=metresTo({lat:p[0],lng:p[1]},{lat:f.lat,lng:f.lng})-f.r;best=Math.min(best,d);});return best;}
@@ -344,12 +417,14 @@
   let map3=null, trk=null;
   function initMap3(){
     if(map3){setTimeout(()=>map3.invalidateSize(),120);return;}
-    map3=L.map('navmap',{zoomControl:false,attributionControl:true,dragging:true}).setView(route[0],18);
+    const start=route[0]||((META&&META.center)?[META.center.lat,META.center.lng]:[41.956,-8.793]);
+    map3=L.map('navmap',{zoomControl:false,attributionControl:true,dragging:true}).setView(start,19);
     addTiles(map3);
+    addFieldOverlay(map3);
     addFoci(map3);
     const tIcon=L.divIcon({className:'trk-wrap',html:'<div class="trk">🚜</div>',iconSize:[30,30],iconAnchor:[15,15]});
-    trk=L.marker(route[0],{icon:tIcon,interactive:false}).addTo(map3);
-    setTimeout(()=>{map3.invalidateSize();map3.setView(route[0],18);},220);
+    trk=L.marker(start,{icon:tIcon,interactive:false}).addTo(map3);
+    setTimeout(()=>{map3.invalidateSize();map3.setView(start,19);},220);
   }
 
   /* ── State Engine ── */
@@ -438,7 +513,7 @@
   function startDrive(){if(timer)return;if(actx&&actx.state==='suspended')actx.resume();playBtn.innerHTML='&#10073;&#10073; Pausa';timer=setInterval(step,110);}
   function stopDrive(){if(timer){clearInterval(timer);timer=null;}}
   function toggleDrive(){try{ensureAudio();}catch(e){}if(timer){stopDrive();playBtn.innerHTML='&#9654; Riprendi';}else{if(idx>=route.length)idx=0;startDrive();}}
-  function resetDrive(){stopDrive();idx=0;last='go';playBtn.innerHTML='&#9654; Simula percorso';if(trk)trk.setLatLng(route[0]);if(map3)map3.setView(route[0],18);applyState(route[0]);}
+  function resetDrive(){stopDrive();idx=0;last='go';playBtn.innerHTML='&#9654; Simula percorso';if(!route.length)return;if(trk)trk.setLatLng(route[0]);if(map3)map3.setView(route[0],19);applyState(route[0]);}
 
   /* ── Interactive Target Synchronization ── */
   let surveyUploading = false;
@@ -449,6 +524,7 @@
     surveyUploading = true;
 
     try { ensureAudio(); } catch(e) {}
+    loadRealData();   // scarica realmente il risultato del processing (data/*.json)
 
     const drop = document.getElementById('up-drop');
     const dropIc = document.getElementById('up-drop-ic');
@@ -492,16 +568,14 @@
       dropT.textContent = 'Verifica valvole...';
       dropD.textContent = 'Configurazione spruzzatori automatici tractor-link';
       
-      // Count-up target points
+      // Count-up sul numero reale di focolai Esca rilevati
+      const target = (META && META.stats ? META.stats.foci : FOCI.length) || 0;
       let pt = 0;
       const countInterval = setInterval(() => {
         pt += 1;
-        if (pt >= 3) {
-          pt = 3;
-          clearInterval(countInterval);
-        }
+        if (pt >= target) { pt = target; clearInterval(countInterval); }
         upNum.textContent = pt;
-      }, 350);
+      }, Math.max(120, Math.round(1200 / Math.max(target,1))));
     }, 2000);
 
     // Step 3: Trajectory load...
@@ -525,8 +599,8 @@
       tone(1100, 0.15, 'sine', 0.08, 0.12);
 
       upAurora.style.opacity = '0.95';
-      upLabel.textContent = 'Campo Nord 04';
-      upSub.textContent = '3 punti target da irrorare';
+      upLabel.textContent = (META && META.field) || 'Campo';
+      upSub.textContent = upSub.dataset.real || ((META?META.stats.foci:FOCI.length)+' focolai Esca da trattare');
       
       drop.style.borderColor = 'var(--go)';
       drop.style.background = 'rgba(79, 180, 90, 0.08)';
@@ -553,9 +627,14 @@
     document.querySelectorAll('.tabbar button').forEach(e=>e.classList.remove('on'));
     document.getElementById('t-'+s).classList.add('on');
     if(s!=='cabin') stopDrive();
-    if(s==='map') initMap2();
-    if(s==='cabin'){ initMap3(); applyState(route[0]); }
+    if(s==='map' || s==='cabin'){
+      loadRealData().then(()=>{
+        if(s==='map') initMap2();
+        if(s==='cabin'){ initMap3(); if(route.length) applyState(route[0]); }
+      });
+    }
   }
+  loadRealData();   // popola subito statistiche/etichette reali
   go('upload');
 </script>
 </body>

@@ -1,0 +1,159 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.7923902,
+     41.9574022
+    ]
+   },
+   "properties": {
+    "r": 14.0,
+    "vines": 10
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.7927424,
+     41.956949
+    ]
+   },
+   "properties": {
+    "r": 8.2,
+    "vines": 6
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.7921213,
+     41.9576709
+    ]
+   },
+   "properties": {
+    "r": 10.0,
+    "vines": 6
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.7925673,
+     41.9571686
+    ]
+   },
+   "properties": {
+    "r": 7.4,
+    "vines": 4
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.7926123,
+     41.9570824
+    ]
+   },
+   "properties": {
+    "r": 5.6,
+    "vines": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.7920157,
+     41.9576425
+    ]
+   },
+   "properties": {
+    "r": 4.8,
+    "vines": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.7923372,
+     41.9573153
+    ]
+   },
+   "properties": {
+    "r": 4.9,
+    "vines": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.792854,
+     41.9569711
+    ]
+   },
+   "properties": {
+    "r": 2.0,
+    "vines": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.7926785,
+     41.9571384
+    ]
+   },
+   "properties": {
+    "r": 2.0,
+    "vines": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.7924251,
+     41.9572305
+    ]
+   },
+   "properties": {
+    "r": 2.0,
+    "vines": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -8.792183,
+     41.9575177
+    ]
+   },
+   "properties": {
+    "r": 2.0,
+    "vines": 1
+   }
+  }
+ ]
+}

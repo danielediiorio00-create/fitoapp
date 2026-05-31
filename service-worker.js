@@ -1,8 +1,14 @@
-const CACHE_NAME = 'fitoapp-v6';
+const CACHE_NAME = 'fitoapp-v7';
 const ASSETS = [
   './',
   './index.html',
   './icon-512.png',
+  './data/data.js',
+  './data/targets.geojson',
+  './data/route.geojson',
+  './data/meta.json',
+  './data/field.png',
+  './data/ndvi.png',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
   'https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&display=swap'

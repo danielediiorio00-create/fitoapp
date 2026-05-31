@@ -1,0 +1,7 @@
+# Dati grezzi scaricati da Zenodo e artefatti di verifica (rigenerabili, pesanti).
+# La pipeline (tools/process_dataset.py) li riscarica/rigenera; gli asset web
+# finali stanno in data/ e SONO versionati.
+raw/
+node_modules/
+__pycache__/
+*.pyc
